@@ -1,37 +1,35 @@
 import streamlit as st
 from sqlalchemy import create_engine, MetaData
 import pandas as pd
-import psycopg2
+import pymysql
 
-# Configurações de conexão com o PostgreSQL
+# Configurações de conexão com o MySQL
 DB_HOST = "localhost"
 DB_NAME = "app_db"
 DB_USER = "admin"
 DB_PASS = "unifor@2024"
-DB_PORT = "5432"
+DB_PORT = "3306"
 
 # Função para criar a conexão com o banco de dados
 def init_connection():
-    return create_engine(f'postgresql://{DB_USER}:{DB_PASS}@{DB_HOST}:{DB_PORT}/{DB_NAME}')
+    return create_engine(f'mysql+pymysql://{DB_USER}:{DB_PASS}@{DB_HOST}:{DB_PORT}/{DB_NAME}')
 
 # Função para criar a tabela de cadastro se não existir
 def create_table(engine):
     with engine.connect() as conn:
         conn.execute("""
         CREATE TABLE IF NOT EXISTS pessoas (
-            id SERIAL PRIMARY KEY,
+            id INT AUTO_INCREMENT PRIMARY KEY,
             nome VARCHAR(100),
             email VARCHAR(100),
             idade INT
         );
         """)
-        conn.commit()
 
 # Função para inserir uma nova pessoa
 def add_person(engine, nome, email, idade):
     with engine.connect() as conn:
         conn.execute(f"INSERT INTO pessoas (nome, email, idade) VALUES ('{nome}', '{email}', {idade})")
-        conn.commit()
 
 # Função para checar o status do banco
 def check_db_status(engine):
