@@ -1,10 +1,11 @@
+import os
 import streamlit as st
 from sqlalchemy import create_engine, MetaData
 import pandas as pd
 import pymysql
 
 # Configurações de conexão com o MySQL
-DB_HOST = "localhost"
+DB_HOST = os.environ.get("RDS_ENDPOINT", "localhost")  # Lê o endpoint do RDS
 DB_NAME = "app_db"
 DB_USER = "admin"
 DB_PASS = "unifor!2024"
