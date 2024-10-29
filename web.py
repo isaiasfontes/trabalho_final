@@ -5,15 +5,15 @@ import pandas as pd
 import pymysql
 
 # Configurações de conexão com o MySQL
-DB_HOST = os.getenv("RDS_ENDPOINT", "localhost")
+DB_HOST = os.getenv("RDS_ENDPOINT", "localhost:3306")
 DB_NAME = os.getenv("DB_NAME", "app_db")
 DB_USER = os.getenv("DB_USER", "admin")
 DB_PASS = os.getenv("DB_PASS", "")
-DB_PORT = "3306"
+
 
 # Função para criar a conexão com o banco de dados
 def init_connection():
-    return create_engine(f'mysql+pymysql://{DB_USER}:{DB_PASS}@{DB_HOST}:{DB_PORT}/{DB_NAME}')
+    return create_engine(f'mysql+pymysql://{DB_USER}:{DB_PASS}@{DB_HOST}/{DB_NAME}')
 
 # Função para criar a tabela de cadastro se não existir
 def create_table(engine):
