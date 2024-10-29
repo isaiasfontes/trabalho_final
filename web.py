@@ -5,10 +5,10 @@ import pandas as pd
 import pymysql
 
 # Configurações de conexão com o MySQL
-DB_HOST = os.environ.get("RDS_ENDPOINT", "localhost")  # Lê o endpoint do RDS
-DB_NAME = "app_db"
-DB_USER = "admin"
-DB_PASS = "unifor!2024"
+DB_HOST = os.getenv("RDS_ENDPOINT", "localhost")
+DB_NAME = os.getenv("DB_NAME", "app_db")
+DB_USER = os.getenv("DB_USER", "admin")
+DB_PASS = os.getenv("DB_PASS", "")
 DB_PORT = "3306"
 
 # Função para criar a conexão com o banco de dados
