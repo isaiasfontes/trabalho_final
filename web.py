@@ -7,7 +7,7 @@ import pymysql
 DB_HOST = "localhost"
 DB_NAME = "app_db"
 DB_USER = "admin"
-DB_PASS = "unifor@2024"
+DB_PASS = "unifor!2024"
 DB_PORT = "3306"
 
 # Função para criar a conexão com o banco de dados
