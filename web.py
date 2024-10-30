@@ -17,7 +17,7 @@ if not all([DB_HOST, DB_NAME, DB_USER, DB_PASS]):
 else:
     # Função para criar a conexão com o banco de dados
     def init_connection():
-        return create_engine(f'mysql+pymysql://{DB_USER}:{DB_PASS}@{DB_HOST}/{DB_NAME}')
+        return create_engine(f'mysql+pymysql://{DB_USER}:{DB_PASS}@{DB_HOST}/{DB_NAME}', echo=True)
 
     # Função para criar a tabela de cadastro se não existir
     def create_table(engine):
@@ -33,24 +33,41 @@ else:
 
     # Função para inserir uma nova pessoa
     def add_person(engine, nome, email, idade):
-        with engine.connect() as conn:
-            conn.execute(
-                text("INSERT INTO pessoas (nome, email, idade) VALUES (:nome, :email, :idade)"),
-                {"nome": nome, "email": email, "idade": idade}
-            )
+        try:
+            with engine.begin() as conn:
+                conn.execute(
+                    text("INSERT INTO pessoas (nome, email, idade) VALUES (:nome, :email, :idade)"),
+                    {"nome": nome, "email": email, "idade": idade}
+                )
+            st.success(f"Cadastro de {nome} realizado com sucesso!")
+        except Exception as e:
+            st.error(f"Erro ao inserir dados: {e}")
 
-    # Função para checar o status do banco
+    # Função para checar o status do banco e contar o número de linhas
     def check_db_status(engine):
         with engine.connect() as conn:
-            # Obter lista de tabelas e contar o número de linhas de cada tabela
-            metadata = MetaData(bind=engine)
-            metadata.reflect()
+            metadata = MetaData()
+            metadata.reflect(bind=engine)
             table_status = []
-            for table in metadata.tables:
-                result = conn.execute(f"SELECT COUNT(*) FROM {table}")
+            for table_name in metadata.tables.keys():
+                result = conn.execute(text(f"SELECT COUNT(*) FROM {table_name}"))
                 count = result.fetchone()[0]
-                table_status.append((table, count))
+                table_status.append((table_name, count))
             return table_status
+
+    # Função para listar todas as pessoas cadastradas
+    def list_people(engine):
+        with engine.connect() as conn:
+            result = conn.execute(text("SELECT * FROM pessoas"))
+            return result.fetchall()
+
+    # Inicializar valores padrão se não existirem no session_state
+    if 'nome' not in st.session_state:
+        st.session_state['nome'] = ""
+    if 'email' not in st.session_state:
+        st.session_state['email'] = ""
+    if 'idade' not in st.session_state:
+        st.session_state['idade'] = 0
 
     # Interface do Streamlit
     st.title('Cadastro de Pessoas')
@@ -66,15 +83,18 @@ else:
     with tab1:
         st.header("Preencha os dados abaixo:")
         with st.form(key='form_cadastro'):
-            nome = st.text_input("Nome")
-            email = st.text_input("Email")
-            idade = st.number_input("Idade", min_value=0, step=1)
+            nome = st.text_input("Nome", key='nome', value=st.session_state['nome'])
+            email = st.text_input("Email", key='email', value=st.session_state['email'])
+            idade = st.number_input("Idade", min_value=0, step=1, key='idade', value=st.session_state['idade'])
             submit_button = st.form_submit_button(label="Cadastrar")
 
         # Quando o botão de submit é pressionado
         if submit_button:
-            add_person(engine, nome, email, idade)
-            st.success(f"Cadastro de {nome} realizado com sucesso!")
+            add_person(engine, st.session_state['nome'], st.session_state['email'], st.session_state['idade'])
+            # Removida a limpeza dos campos
+            # st.session_state['nome'] = ""
+            # st.session_state['email'] = ""
+            # st.session_state['idade'] = 0
 
     # Aba 2: Status do Banco de Dados
     with tab2:
@@ -83,5 +103,14 @@ else:
         if status:
             for table, count in status:
                 st.write(f"Tabela: {table}, Linhas: {count}")
+                
+            # Listar todos os registros da tabela "pessoas"
+            st.subheader("Registros Cadastrados")
+            people = list_people(engine)
+            if people:
+                df = pd.DataFrame(people, columns=["ID", "Nome", "Email", "Idade"])
+                st.dataframe(df)
+            else:
+                st.write("Nenhum registro encontrado.")
         else:
             st.warning("Nenhuma tabela encontrada no banco de dados.")
