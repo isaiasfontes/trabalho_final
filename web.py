@@ -1,6 +1,6 @@
 import os
 import streamlit as st
-from sqlalchemy import create_engine, MetaData
+from sqlalchemy import create_engine, MetaData, text
 import pandas as pd
 import pymysql
 
@@ -22,19 +22,22 @@ else:
     # Função para criar a tabela de cadastro se não existir
     def create_table(engine):
         with engine.connect() as conn:
-            conn.execute("""
+            conn.execute(text("""
             CREATE TABLE IF NOT EXISTS pessoas (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 nome VARCHAR(100),
                 email VARCHAR(100),
                 idade INT
             );
-            """)
+            """))
 
     # Função para inserir uma nova pessoa
     def add_person(engine, nome, email, idade):
         with engine.connect() as conn:
-            conn.execute(f"INSERT INTO pessoas (nome, email, idade) VALUES ('{nome}', '{email}', {idade})")
+            conn.execute(
+                text("INSERT INTO pessoas (nome, email, idade) VALUES (:nome, :email, :idade)"),
+                {"nome": nome, "email": email, "idade": idade}
+            )
 
     # Função para checar o status do banco
     def check_db_status(engine):
